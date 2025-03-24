@@ -141,12 +141,12 @@ export const getCustomCategories = async (rootCategory, subCategory) => {
 };
 
 // Add or update custom category
-export const addCustomCategory = async (rootCategory, subCategory, { name, image }) => {
+export const addCustomCategory = async (rootCategory, subCategory, categoryType, { name, image }) => {
   try {
     // Create a unique filename using timestamp
     const timestamp = Date.now();
     const filename = `${timestamp}_${image.name}`;
-    const imagePath = `categories/${rootCategory}/${subCategory}/${name}/${filename}`;
+    const imagePath = `categories/${rootCategory}/${subCategory}/${categoryType}/${name}/${filename}`;
     
     // Upload image and get URL
     const imageUrl = await uploadImage(image, imagePath);
@@ -156,6 +156,7 @@ export const addCustomCategory = async (rootCategory, subCategory, { name, image
       name,
       rootCategory,
       subCategory,
+      type: categoryType,
       featuredImage: imageUrl,
       imagePath,
       variations: [],
@@ -168,6 +169,7 @@ export const addCustomCategory = async (rootCategory, subCategory, { name, image
       name,
       rootCategory,
       subCategory,
+      type: categoryType,
       featuredImage: imageUrl,
       imagePath,
       variations: []
@@ -179,7 +181,7 @@ export const addCustomCategory = async (rootCategory, subCategory, { name, image
 };
 
 // Add variation to custom category
-export const addVariation = async (categoryId, rootCategory, subCategory, { name, image }) => {
+export const addVariation = async (categoryId, rootCategory, subCategory, categoryType, { name, image }) => {
   try {
     const categoryRef = doc(db, 'categories', categoryId);
     const categoryDoc = await getDoc(categoryRef);
@@ -191,7 +193,7 @@ export const addVariation = async (categoryId, rootCategory, subCategory, { name
     // Create a unique filename using timestamp
     const timestamp = Date.now();
     const filename = `${timestamp}_${image.name}`;
-    const imagePath = `categories/${rootCategory}/${subCategory}/${categoryId}/variations/${name}/${filename}`;
+    const imagePath = `categories/${rootCategory}/${subCategory}/${categoryType}/${categoryId}/variations/${name}/${filename}`;
     
     // Upload image and get URL
     const imageUrl = await uploadImage(image, imagePath);
@@ -201,6 +203,7 @@ export const addVariation = async (categoryId, rootCategory, subCategory, { name
       name,
       image: imageUrl,
       imagePath,
+      type: categoryType,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -276,7 +279,7 @@ export const deleteCustomCategory = async (categoryId) => {
   }
 };
 
-export const updateCustomCategory = async (categoryId, rootCategory, subCategory, { name, image }) => {
+export const updateCustomCategory = async (categoryId, rootCategory, subCategory, categoryType, { name, image }) => {
   try {
     const categoryRef = doc(db, 'categories', categoryId);
     const categoryDoc = await getDoc(categoryRef);
@@ -289,6 +292,7 @@ export const updateCustomCategory = async (categoryId, rootCategory, subCategory
       name,
       rootCategory,
       subCategory,
+      type: categoryType,
       updatedAt: serverTimestamp()
     };
 
@@ -297,7 +301,7 @@ export const updateCustomCategory = async (categoryId, rootCategory, subCategory
       // Create a unique filename using timestamp
       const timestamp = Date.now();
       const filename = `${timestamp}_${image.name}`;
-      const imagePath = `categories/${rootCategory}/${subCategory}/${name}/${filename}`;
+      const imagePath = `categories/${rootCategory}/${subCategory}/${categoryType}/${name}/${filename}`;
       
       // Delete old image if it exists
       if (categoryDoc.data().imagePath) {
@@ -324,7 +328,7 @@ export const updateCustomCategory = async (categoryId, rootCategory, subCategory
   }
 };
 
-export const updateVariation = async (categoryId, variationId, rootCategory, subCategory, { name, image }) => {
+export const updateVariation = async (categoryId, variationId, rootCategory, subCategory, categoryType, { name, image }) => {
   try {
     const categoryRef = doc(db, 'categories', categoryId);
     const categoryDoc = await getDoc(categoryRef);
@@ -344,6 +348,7 @@ export const updateVariation = async (categoryId, variationId, rootCategory, sub
     const updateData = {
       id: variationId,
       name,
+      type: categoryType,
       updatedAt: new Date().toISOString(),
       createdAt: oldVariation.createdAt // Preserve creation date
     };
@@ -353,7 +358,7 @@ export const updateVariation = async (categoryId, variationId, rootCategory, sub
       // Create a unique filename using timestamp
       const timestamp = Date.now();
       const filename = `${timestamp}_${image.name}`;
-      const imagePath = `categories/${rootCategory}/${subCategory}/${categoryId}/variations/${name}/${filename}`;
+      const imagePath = `categories/${rootCategory}/${subCategory}/${categoryType}/${categoryId}/variations/${name}/${filename}`;
       
       // Delete old image if it exists
       if (oldVariation.imagePath) {
