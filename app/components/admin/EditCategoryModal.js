@@ -14,35 +14,60 @@ export default function EditCategoryModal({
   const [name, setName] = useState('');
   const [image, setImage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (initialData) {
       setName(initialData.name || '');
       // For categories, use featuredImage, for variations use image
       setImage(initialData.featuredImage || initialData.image || '');
+      setError('');
     }
   }, [initialData]);
 
+  // Clean up when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setError('');
+    }
+  }, [isOpen]);
+
+  const handleImageChange = (file) => {
+    console.log('Selected file in edit modal:', file);
+    setImage(file);
+    setError('');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name || !image) {
-      toast.error('Please fill in all fields');
+    if (!name.trim()) {
+      toast.error('Please enter a name');
+      return;
+    }
+    
+    if (!image) {
+      toast.error('Please select an image');
       return;
     }
 
     setLoading(true);
+    setError('');
     
     try {
+      console.log('Submitting with image:', image);
+      console.log('Image type:', image instanceof File ? 'File' : typeof image);
+      
       await onSubmit({ 
         name, 
-        // If image is an array (new upload) use first file, otherwise use string URL
-        image: Array.isArray(image) ? image[0] : image
+        // Pass the image as is - it's either a File object or a string URL
+        image
       });
       toast.success(`${type} updated successfully`);
       handleClose();
     } catch (error) {
       console.error('Error submitting form:', error);
-      toast.error(`Failed to update ${type}`);
+      setError(error.message || `Failed to update ${type}`);
+      toast.error(`Failed to update ${type}: ${error.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
@@ -51,6 +76,7 @@ export default function EditCategoryModal({
   const handleClose = () => {
     setName('');
     setImage('');
+    setError('');
     onClose();
   };
 
@@ -62,12 +88,19 @@ export default function EditCategoryModal({
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
           <button
+            type="button"
             onClick={handleClose}
             className="p-1 hover:bg-gray-100 rounded-full transition-colors"
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
         </div>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -91,7 +124,7 @@ export default function EditCategoryModal({
             </label>
             <ImageUpload
               value={image}
-              onChange={setImage}
+              onChange={handleImageChange}
               onRemove={() => setImage('')}
             />
           </div>

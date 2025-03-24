@@ -21,6 +21,33 @@ import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage
 // Upload image to Firebase Storage
 export const uploadImage = async (file, path) => {
   try {
+    // Validate file
+    if (!file) {
+      throw new Error('No file provided');
+    }
+    
+    if (!(file instanceof File)) {
+      throw new Error(`Invalid file object: ${typeof file}`);
+    }
+    
+    // Check file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      throw new Error(`File too large: ${(file.size / (1024 * 1024)).toFixed(2)}MB (max 5MB)`);
+    }
+    
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      throw new Error(`Invalid file type: ${file.type}. Only JPEG, PNG, and WebP are allowed.`);
+    }
+
+    console.log('Uploading file:', {
+      name: file.name,
+      size: `${(file.size / 1024).toFixed(2)}KB`,
+      type: file.type,
+      path: path
+    });
+    
     // Create a storage reference
     const storageRef = ref(storage, path);
     
@@ -33,6 +60,21 @@ export const uploadImage = async (file, path) => {
     return url;
   } catch (error) {
     console.error('Error uploading image:', error);
+    
+    // Handle specific Firebase storage errors
+    if (error.code) {
+      switch (error.code) {
+        case 'storage/unauthorized':
+          throw new Error('Storage permission denied. Please check your Firebase storage rules.');
+        case 'storage/canceled':
+          throw new Error('Upload was canceled');
+        case 'storage/unknown':
+          throw new Error('Unknown error occurred during upload');
+        default:
+          throw new Error(`Failed to upload image: ${error.message}`);
+      }
+    }
+    
     throw new Error(`Failed to upload image: ${error.message}`);
   }
 };

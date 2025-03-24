@@ -72,33 +72,71 @@ export default function CategoriesPage() {
   }, [selectedRoot, selectedSub]);
 
   const handleAddCategory = async ({ name, image }) => {
+    if (!selectedRoot || !selectedSub) {
+      toast.error('Please select a root and sub category first');
+      return;
+    }
+
     try {
+      console.log('Adding category with:', { 
+        name, 
+        imageType: image ? (image instanceof File ? 'File' : typeof image) : 'none',
+        imageSize: image instanceof File ? `${(image.size / 1024).toFixed(2)}KB` : 'N/A'
+      });
+      
+      if (!image || !(image instanceof File)) {
+        throw new Error('Please select a valid image file');
+      }
+      
       setLoading(true);
-      await addCustomCategory(selectedRoot, selectedSub, { name, image });
+      await addCustomCategory(selectedRoot, selectedSub, { 
+        name: name.trim(), 
+        image 
+      });
+      
+      setIsAddCategoryModalOpen(false);
       toast.success('Category added successfully');
     } catch (error) {
       console.error('Error adding category:', error);
-      toast.error('Failed to add category');
+      toast.error(error.message || 'Failed to add category');
     } finally {
       setLoading(false);
     }
   };
 
   const handleAddVariation = async ({ name, image }) => {
-    if (!selectedCustom) return;
+    if (!selectedCustom) {
+      toast.error('Please select a category first');
+      return;
+    }
 
     try {
+      console.log('Adding variation with:', { 
+        name, 
+        imageType: image ? (image instanceof File ? 'File' : typeof image) : 'none',
+        imageSize: image instanceof File ? `${(image.size / 1024).toFixed(2)}KB` : 'N/A'
+      });
+      
+      if (!image || !(image instanceof File)) {
+        throw new Error('Please select a valid image file');
+      }
+      
       setLoading(true);
       await addVariation(
         selectedCustom.id,
         selectedRoot,
         selectedSub,
-        { name, image }
+        { 
+          name: name.trim(), 
+          image 
+        }
       );
+      
+      setIsAddVariationModalOpen(false);
       toast.success('Variation added successfully');
     } catch (error) {
       console.error('Error adding variation:', error);
-      toast.error('Failed to add variation');
+      toast.error(error.message || 'Failed to add variation');
     } finally {
       setLoading(false);
     }
@@ -161,78 +199,78 @@ export default function CategoriesPage() {
   };
 
   const handleEditCategory = async ({ name, image }) => {
-    if (!editingItem) return;
+    if (!editingItem) {
+      toast.error('No category selected for editing');
+      return;
+    }
+
+    if (!selectedRoot || !selectedSub) {
+      toast.error('Root and sub category must be selected');
+      return;
+    }
 
     try {
+      console.log('Editing category with:', { 
+        name, 
+        imageType: image ? (image instanceof File ? 'File' : typeof image) : 'none',
+        imageSize: image instanceof File ? `${(image.size / 1024).toFixed(2)}KB` : 'N/A'
+      });
+
       setLoading(true);
       await updateCustomCategory(
         editingItem.id,
         selectedRoot,
         selectedSub,
-        { name, image }
+        { 
+          name: name.trim(),
+          image: image instanceof File ? image : undefined
+        }
       );
+      
+      setIsEditCategoryModalOpen(false);
       toast.success('Category updated successfully');
     } catch (error) {
       console.error('Error updating category:', error);
-      toast.error('Failed to update category');
+      toast.error(error.message || 'Failed to update category');
     } finally {
       setLoading(false);
       setEditingItem(null);
-      setIsEditCategoryModalOpen(false);
     }
   };
 
   const handleEditVariation = async ({ name, image }) => {
-    if (!editingItem || !selectedCustom) return;
+    if (!editingItem || !selectedCustom) {
+      toast.error('No variation selected for editing');
+      return;
+    }
 
     try {
+      console.log('Editing variation with:', { 
+        name, 
+        imageType: image ? (image instanceof File ? 'File' : typeof image) : 'none',
+        imageSize: image instanceof File ? `${(image.size / 1024).toFixed(2)}KB` : 'N/A'
+      });
+
       setLoading(true);
       await updateVariation(
         selectedCustom.id,
         editingItem.id,
         selectedRoot,
         selectedSub,
-        { name, image }
+        { 
+          name: name.trim(),
+          image: image instanceof File ? image : undefined
+        }
       );
 
-      // Update the local state immediately
-      setCustomCategories(prev => {
-        const key = `${selectedRoot}-${selectedSub}`;
-        const categories = [...(prev[key] || [])];
-        const categoryIndex = categories.findIndex(cat => cat.id === selectedCustom.id);
-        
-        if (categoryIndex !== -1) {
-          const category = {...categories[categoryIndex]};
-          const variationIndex = category.variations.findIndex(v => v.id === editingItem.id);
-          
-          if (variationIndex !== -1) {
-            category.variations = [...category.variations];
-            category.variations[variationIndex] = {
-              ...category.variations[variationIndex],
-              name,
-              image: image || category.variations[variationIndex].image
-            };
-            categories[categoryIndex] = category;
-            
-            // Update selectedCustom to reflect changes
-            setSelectedCustom(category);
-          }
-        }
-        
-        return {
-          ...prev,
-          [key]: categories
-        };
-      });
-
+      setIsEditVariationModalOpen(false);
       toast.success('Variation updated successfully');
     } catch (error) {
       console.error('Error updating variation:', error);
-      toast.error('Failed to update variation');
+      toast.error(error.message || 'Failed to update variation');
     } finally {
       setLoading(false);
       setEditingItem(null);
-      setIsEditVariationModalOpen(false);
     }
   };
 
